@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mod Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050505;
+    --card: #111;
+    --card-hover: #1a1a1a;
+    --text: #f5f5f5;
+    --muted: #a0a0a0;
+    --accent: #e11d48;
+    --border: #2a2a2a;
+    --radius: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+  .mist {
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at 25% 40%, rgba(225,29,72,0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 75% 60%, rgba(225,29,72,0.08) 0%, transparent 45%);
+    pointer-events: none; z-index: 0;
+    animation: mistPulse 18s ease-in-out infinite alternate;
+  }
+  @keyframes mistPulse { from { opacity: 0.65; } to { opacity: 1; } }
+  .rain { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+  .drop {
+    position: absolute; bottom: 100%; width: 1px; height: 32px;
+    background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.2));
+    animation: fall linear infinite;
+  }
+  @keyframes fall { to { transform: translateY(110vh); } }
+  .lightning {
+    position: fixed; inset: 0; background: white; opacity: 0;
+    pointer-events: none; z-index: 2; transition: opacity 0.05s;
+  }
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.1rem 2rem; background: rgba(5,5,5,0.92);
+    backdrop-filter: blur(14px); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .logo { display: flex; align-items: center; gap: 0.7rem; font-weight: 700; font-size: 1.3rem; }
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, #e11d48, #be123c);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white;
+  }
+  .search-box { position: relative; width: 300px; }
+  .search-box input {
+    width: 100%; padding: 0.75rem 1.1rem 0.75rem 2.8rem;
+    background: #111; border: 1px solid var(--border); border-radius: 999px;
+    color: var(--text); font-size: 0.95rem;
+  }
+  .search-box input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(225,29,72,0.25); }
+  .search-icon {
+    position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+    width: 18px; height: 18px; color: #666; pointer-events: none;
+  }
+  .hero { text-align: center; padding: 3rem 1.5rem 1.5rem; position: relative; z-index: 10; }
+  .hero h1 {
+    font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #fff 20%, #fb7185);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p { color: var(--muted); font-size: 1.05rem; }
+  .drop-zone { max-width: 1200px; margin: 0 auto 1.5rem; padding: 0 1.5rem; position: relative; z-index: 10; }
+  .drop-area {
+    border: 2px dashed #3a3a3a; border-radius: 16px; padding: 1.8rem;
+    text-align: center; background: #0a0a0a; transition: 0.25s; cursor: pointer;
+  }
+  .drop-area.dragover { border-color: var(--accent); background: rgba(225,29,72,0.1); }
+  .drop-area p { color: var(--muted); margin-top: 0.4rem; font-size: 0.95rem; }
+  .drop-area strong { color: var(--accent); }
+  .controls {
+    display: flex; justify-content: space-between; align-items: center;
+    max-width: 1200px; margin: 0 auto 1.5rem; padding: 0 1.5rem;
+    flex-wrap: wrap; gap: 1rem; position: relative; z-index: 10;
+  }
+  .filters { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .filter-btn {
+    background: #111; border: 1px solid var(--border); color: var(--muted);
+    padding: 0.5rem 1.15rem; border-radius: 999px; font-size: 0.9rem; cursor: pointer;
+  }
+  .filter-btn:hover, .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .right-controls { display: flex; gap: 0.8rem; align-items: center; }
+  #sort {
+    background: #111; border: 1px solid var(--border); color: var(--text);
+    padding: 0.55rem 1.1rem; border-radius: 12px; font-size: 0.9rem; cursor: pointer;
+  }
+  .clear-btn {
+    background: #331111; border: 1px solid #662222; color: #ff6b6b;
+    padding: 0.55rem 1.2rem; border-radius: 12px; font-size: 0.9rem; cursor: pointer;
+  }
+  .clear-btn:hover { background: #e11d48; color: white; border-color: #e11d48; }
+  .mods-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem; max-width: 1200px; margin: 0 auto; padding: 0 1.5rem 4rem;
+    position: relative; z-index: 10;
+  }
+  .mod-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s;
+    opacity: 0; transform: translateY(20px); animation: fadeUp 0.5s ease forwards;
+  }
+  .mod-card:hover {
+    transform: translateY(-6px); border-color: rgba(225,29,72,0.5);
+    background: var(--card-hover); box-shadow: 0 18px 40px rgba(0,0,0,0.5);
+  }
+  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+  .mod-thumb {
+    height: 145px; background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+    display: flex; align-items: center; justify-content: center; font-size: 2.9rem;
+  }
+  .mod-body { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; }
+  .mod-title { font-size: 1.15rem; font-weight: 600; margin-bottom: 0.35rem; }
+  .mod-desc {
+    color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem; flex: 1;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .mod-meta { display: flex; gap: 0.65rem; font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; flex-wrap: wrap; }
+  .tag { background: rgba(225,29,72,0.15); color: #fb7185; padding: 0.2rem 0.55rem; border-radius: 6px; font-size: 0.75rem; }
+  .download-btn {
+    display: block; text-align: center;
+    background: linear-gradient(135deg, #e11d48, #be123c); color: white;
+    text-decoration: none; padding: 0.7rem; border-radius: 11px; font-weight: 600; font-size: 0.95rem;
+    border: none; cursor: pointer; width: 100%;
+  }
+  .download-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(225,29,72,0.4); }
+  .empty-state { text-align: center; padding: 4rem; color: var(--muted); display: none; position: relative; z-index: 10; }
+  footer { text-align: center; padding: 2rem; color: #666; font-size: 0.9rem; border-top: 1px solid var(--border); position: relative; z-index: 10; }
+  @media (max-width: 700px) {
+    header { flex-direction: column; gap: 1rem; padding: 1rem; }
+    .search-box { width: 100%; }
+    .hero h1 { font-size: 2rem; }
+    .controls { flex-direction: column; align-items: stretch; }
+  }
+</style>
+</head>
+<body>
+  <div class="mist"></div>
+  <div class="rain" id="rain"></div>
+  <div class="lightning" id="lightning"></div>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">◆</div>
+      <span>Mod Hub</span>
+    </div>
+    <div class="search-box">
+      <input type="text" id="search" placeholder="Search mods...">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.35-4.35"></path>
+      </svg>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Public Mod Collection</h1>
+      <p>Drag & drop files • Downloads now work properly</p>
+    </section>
+
+    <div class="drop-zone">
+      <div class="drop-area" id="dropArea">
+        <div style="font-size: 2rem; margin-bottom: 0.4rem;">📁</div>
+        <strong>Drag & drop mod files here</strong>
+        <p>or click to select • Files are saved in the browser</p>
+        <input type="file" id="fileInput" multiple hidden>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="filters" id="filters">
+        <button class="filter-btn active" data-category="all">All</button>
+      </div>
+      <div class="right-controls">
+        <select id="sort">
+          <option value="newest">Newest</option>
+          <option value="name">Name A-Z</option>
+        </select>
+        <button class="clear-btn" id="clearBtn">Clear All Mods</button>
+      </div>
+    </div>
+
+    <div class="mods-grid" id="mods-grid"></div>
+    <div class="empty-state" id="empty-state">No mods yet — drop some files above</div>
+  </main>
+
+  <footer>Files are stored in your browser • Use Clear All if needed</footer>
+
+<script>
+  // Rain
+  const rain = document.getElementById('rain');
+  for (let i = 0; i < 60; i++) {
+    const d = document.createElement('div');
+    d.className = 'drop';
+    d.style.left = Math.random()*100 + '%';
+    d.style.animationDuration = (0.5 + Math.random()*0.8) + 's';
+    d.style.animationDelay = Math.random()*4 + 's';
+    rain.appendChild(d);
+  }
+
+  // Lightning
+  const lightning = document.getElementById('lightning');
+  setInterval(() => {
+    if (Math.random() > 0.75) {
+      lightning.style.opacity = '0.3';
+      setTimeout(() => lightning.style.opacity = '0', 70);
+    }
+  }, 5000 + Math.random()*7000);
+
+  let mods = JSON.parse(localStorage.getItem('modHubMods') || '[]');
+
+  function save() {
+    localStorage.setItem('modHubMods', JSON.stringify(mods));
+  }
+
+  const grid = document.getElementById('mods-grid');
+  const searchInput = document.getElementById('search');
+  const filtersContainer = document.getElementById('filters');
+  const sortSelect = document.getElementById('sort');
+  const emptyState = document.getElementById('empty-state');
+  const dropArea = document.getElementById('dropArea');
+  const fileInput = document.getElementById('fileInput');
+  const clearBtn = document.getElementById('clearBtn');
+
+  let currentCategory = 'all';
+  let currentSearch = '';
+
+  function updateFilters() {
+    const cats = ['all', ...new Set(mods.map(m => m.category))];
+    filtersContainer.innerHTML = '';
+    cats.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn' + (cat === currentCategory ? ' active' : '');
+      btn.dataset.category = cat;
+      btn.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+      filtersContainer.appendChild(btn);
+    });
+  }
+
+  filtersContainer.addEventListener('click', e => {
+    if (e.target.classList.contains('filter-btn')) {
+      currentCategory = e.target.dataset.category;
+      updateFilters();
+      render();
+    }
+  });
+
+  searchInput.addEventListener('input', e => {
+    currentSearch = e.target.value.toLowerCase().trim();
+    render();
+  });
+  sortSelect.addEventListener('change', render);
+
+  clearBtn.addEventListener('click', () => {
+    if (confirm('Delete all mods?')) {
+      mods = [];
+      save();
+      updateFilters();
+      render();
+    }
+  });
+
+  function render() {
+    let list = mods.filter(m => {
+      const cat = currentCategory === 'all' || m.category === currentCategory;
+      const search = m.name.toLowerCase().includes(currentSearch) || (m.description||'').toLowerCase().includes(currentSearch);
+      return cat && search;
+    });
+
+    if (sortSelect.value === 'newest') list.sort((a,b) => new Date(b.date) - new Date(a.date));
+    else list.sort((a,b) => a.name.localeCompare(b.name));
+
+    grid.innerHTML = '';
+    if (list.length === 0) {
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    list.forEach((mod, i) => {
+      const card = document.createElement('div');
+      card.className = 'mod-card';
+      card.style.animationDelay = (i * 0.05) + 's';
+      card.innerHTML = `
+        <div class="mod-thumb">${mod.icon || '📦'}</div>
+        <div class="mod-body">
+          <h3 class="mod-title">${mod.name}</h3>
+          <p class="mod-desc">${mod.description || ''}</p>
+          <div class="mod-meta">
+            <span class="tag">${mod.category}</span>
+            <span>v${mod.version || '1.0'}</span>
+          </div>
+          <button class="download-btn" data-id="${mod.id}">Download</button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    // Attach download handlers
+    document.querySelectorAll('.download-btn').forEach(btn => {
+      btn.onclick = () => {
+        const mod = mods.find(m => m.id == btn.dataset.id);
+        if (!mod || !mod.data) return alert('File data missing');
+        const a = document.createElement('a');
+        a.href = mod.data;
+        a.download = mod.originalName || mod.name;
+        a.click();
+      };
+    });
+  }
+
+  // Drag & Drop
+  dropArea.onclick = () => fileInput.click();
+  ['dragenter','dragover','dragleave','drop'].forEach(e => {
+    dropArea.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); });
+  });
+  dropArea.addEventListener('dragover', () => dropArea.classList.add('dragover'));
+  dropArea.addEventListener('dragleave', () => dropArea.classList.remove('dragover'));
+  dropArea.addEventListener('drop', e => {
+    dropArea.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+  });
+  fileInput.onchange = () => { handleFiles(fileInput.files); fileInput.value = ''; };
+
+  function handleFiles(files) {
+    [...files].forEach(file => {
+      if (file.size > 4 * 1024 * 1024) {
+        alert(`"${file.name}" is too large (max ~4MB for browser storage)`);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        mods.unshift({
+          id: Date.now() + Math.random(),
+          name: file.name.replace(/\.[^/.]+$/, ''),
+          originalName: file.name,
+          description: `File: ${file.name}`,
+          version: '1.0',
+          category: 'Custom',
+          date: new Date().toISOString().slice(0,10),
+          icon: '📦',
+          data: reader.result   // base64 data
+        });
+        save();
+        updateFilters();
+        render();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  updateFilters();
+  render();
+</script>
+</body>
+</html>
